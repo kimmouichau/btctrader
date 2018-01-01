@@ -1,11 +1,19 @@
 const Request = require('request');
-const Bluebird = request('bluebird');
+const Promise = require('bluebird');
 
 function getPrice() {
     Request.get(ExchangeUrls.COINDESK, function(error, response, body) {
         if (error) {
             throw error;
         }
+
+        var fs = require('fs')
+        fs.readFile('/etc/hosts', 'utf8', function (err,data) {
+            if (err) {
+                return console.log(err);
+            }
+            console.log(data);
+        });
 
         //console.log(body);
         var obj = JSON.parse(body);
@@ -14,23 +22,25 @@ function getPrice() {
 }
 
 function getRipplePrices() {
-    console.log('BTC:' + getPriceForExchange('XRP', 'BTC'));
-    console.log('BITSTAMP:' + getPriceForExchange('XRP', 'BITSTAMP'));
+    getPriceForExchange('XRP', 'BTC').then(function(data) {
+        console.log("price of XRP @ BTC: " + data);
+        return getPriceForExchange('XRP', 'BITSTAMP');
+    }).then(function(data) {
+        console.log("price of XRP @ BITSTAMP: " + data);
+    });
+    //console.log('BTC:' + getPriceForExchange('XRP', 'BTC'));
+    //console.log('BITSTAMP:' + getPriceForExchange('XRP', 'BITSTAMP'));
 }
 
-function getPriceForExchange(instrument, exchange) {
-    var price;
-
+function getPriceForExchange(instrument, exchange, callback) {
     Request.get(eval('XRPExchangeURls.' + exchange), function(error, response, body) {
         if (error) {
             throw error;
         }
 
-        //console.log(body);
         price = parsePriceForMarketPriceResponse(instrument, exchange, body);
+        callback(null, price);
     });
-
-    return price;
 };
 
 function parsePriceForMarketPriceResponse(instrument, exchange, body) {
@@ -61,4 +71,5 @@ XRPExchangeURls = {
     BTC : 'https://api.btcmarkets.net/market/XRP/AUD/tick'
 }
 
-setInterval(getRipplePrices, 2000);
+var getPriceForExchange = Promise.promisify(getPriceForExchange);
+setInterval(getRipplePrices, 5000);
