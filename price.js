@@ -28,14 +28,12 @@ function getRipplePrices() {
     }).then(function(data) {
         console.log("price of XRP @ BITSTAMP: " + data);
     });
-    //console.log('BTC:' + getPriceForExchange('XRP', 'BTC'));
-    //console.log('BITSTAMP:' + getPriceForExchange('XRP', 'BITSTAMP'));
 }
 
 function getPriceForExchange(instrument, exchange, callback) {
     Request.get(eval('XRPExchangeURls.' + exchange), function(error, response, body) {
         if (error) {
-            throw error;
+            callback(new Error('Error retrieving price: ' + error.message));
         }
 
         price = parsePriceForMarketPriceResponse(instrument, exchange, body);
