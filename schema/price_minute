@@ -1,0 +1,1 @@
+create table price_minute(`type` char(8) DEFAULT NULL,`timestamp` bigint NULL DEFAULT NULL,`open` double(40,20) DEFAULT NULL, `high` double(40,20) DEFAULT NULL,`low` double(40,20) DEFAULT NULL,`close` double(40,20) DEFAULT NULL,`volume` double(40,20) DEFAULT NULL);
