@@ -3,13 +3,15 @@ var injester   = require('./price_injester.js');
 const Promise = require('bluebird');
 
 var auth   = require('./authentication.js'); //Promise.promisifyAll(require('./authentication.js'));
-var mysql  = Promise.promisifyAll(require('mysql'));
+//var mysql  = Promise.promisifyAll(require('mysql'));
+var mysql  = require('mysql');
 
 //var pricesObj = injester.injectPrices('c:/temp/bc_prices_by_hour.json');
 //console.log(pricesObj);
 
 var password;
 var connection;
+var db;
 
 var createConnection= Promise.promisify(createConnection);
 var getRdsPassphrase = Promise.promisify(auth.getRdsPassphrase);
@@ -21,6 +23,7 @@ function startConnection(callback) {
         return createConnection(null, null, password, null);
     }).then(function(myconnection) {
         connection = myconnection;
+        db = Promise.promisifyAll(connection);
         console.log("mysql connection established");
         callback(null, connection);
     });
@@ -45,19 +48,29 @@ function createConnection(host, username, password, database, callback) {
 function savePrices(exchange, instrument, prices, callback) {
     var recordsSaved = 0;
 
-    prices.forEach(function(price) {
+    return Promise.each(prices, function(price) {
          var sql = "INSERT INTO price_hour values('BC', " + price[0] + ", " + price[1] + ", " + price[2] + ", " + price[3] + ", " + price[4] + ", " + price[5] + ");";
+         //   console.log('test');
          console.log(sql);
+        //var sql = "select * from price_hour LIMIT 1";
 
-         connection.query(sql, function (error, results, fields) {
-             if (error) throw error;
+         return db.queryAsync(sql).then(function(result) {
              console.log('1 record inserted');
              recordsSaved++;
-         });
+         })
+
+
+     }).then(function(result) {
+        callback(null, recordsSaved);
     });
 
-    callback(null, recordsSaved);
-    return;
+
+
+/*    .then(function(result) {
+        callback(null, recordsSaved);
+    });*/
+
+
 };
 
 function getLastTimestampForInstrument(exchange, instrument, callback) {

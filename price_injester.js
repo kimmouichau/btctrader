@@ -57,6 +57,31 @@ var parseNewPrices = Promise.promisify(selectNewPrices);
 
 var lastTimestamp;
 
+exports.myhandler = function(event, context, callback) {
+    console.log('start handling btc');
+
+    rds.startConnectionAsync().then(function(result) {
+        return rds.getLastTimestampForInstrumentAsync('BTC', 'BTC');
+    }).then(function(record) {
+        console.log(record);
+        lastTimestamp = record;
+        return fetchHourlyPrices(record);
+    }).then(function(prices) {
+        return parseNewPrices(lastTimestamp, prices);
+    }).then(function(newPrices) {
+        console.log(newPrices);
+        return rds.savePricesAsync('BTCMARKETS', 'BTC', newPrices);
+    }).then(function (result) {
+        console.log(result + "new prices saved successfully");
+        process.exit();
+    }).catch(function(e) {
+        console.log("error loading prices: " + e.message);
+        console.log("stack: " + e.stack);
+    });
+}
+
+console.log('start handling btc');
+
 rds.startConnectionAsync().then(function(result) {
     return rds.getLastTimestampForInstrumentAsync('BTC', 'BTC');
 }).then(function(record) {
