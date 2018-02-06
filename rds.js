@@ -49,7 +49,7 @@ function savePrices(exchange, instrument, prices, callback) {
     var recordsSaved = 0;
 
     return Promise.each(prices, function(price) {
-         var sql = "INSERT INTO price_hour values('BC', " + price[0] + ", " + price[1] + ", " + price[2] + ", " + price[3] + ", " + price[4] + ", " + price[5] + ");";
+         var sql = "INSERT INTO price_hour values('BTCMKT', " + price[0] + ", " + price[1] + ", " + price[2] + ", " + price[3] + ", " + price[4] + ", " + price[5] + ");";
          //   console.log('test');
          console.log(sql);
         //var sql = "select * from price_hour LIMIT 1";
