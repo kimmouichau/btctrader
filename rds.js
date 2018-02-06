@@ -1,13 +1,7 @@
-
-var injester   = require('./price_injester.js');
 const Promise = require('bluebird');
-
-var auth   = require('./authentication.js'); //Promise.promisifyAll(require('./authentication.js'));
-//var mysql  = Promise.promisifyAll(require('mysql'));
+var auth   = require('./authentication.js');
 var mysql  = require('mysql');
 
-//var pricesObj = injester.injectPrices('c:/temp/bc_prices_by_hour.json');
-//console.log(pricesObj);
 
 var password;
 var connection;
@@ -30,8 +24,6 @@ function startConnection(callback) {
 }
 
 
-
-
 function createConnection(host, username, password, database, callback) {
     var myconnection = mysql.createConnection({
         host     : 'testinstance.cunjbzflwv9t.ap-southeast-2.rds.amazonaws.com',
@@ -42,43 +34,53 @@ function createConnection(host, username, password, database, callback) {
 
     myconnection.connect();
     callback(null, myconnection);
-};
+}
 
 
+/**
+ * Persists a list of price entries for a particular exchange and instrument into RDS table
+ *
+ * @param exchange
+ * @param instrument
+ * @param prices
+ * @param callback
+ * @returns {*|PromiseLike<T>|Promise<T>}
+ */
 function savePrices(exchange, instrument, prices, callback) {
     var recordsSaved = 0;
 
     return Promise.each(prices, function(price) {
-         var sql = "INSERT INTO price_hour values('BTCMKT', " + price[0] + ", " + price[1] + ", " + price[2] + ", " + price[3] + ", " + price[4] + ", " + price[5] + ");";
-         //   console.log('test');
+         var sql = "INSERT INTO price_hour values('" + exchange + "', '" + instrument + "', " + price[0] + ", " + price[1] + ", " + price[2] + ", " + price[3] + ", " + price[4] + ", " + price[5] + ");";
          console.log(sql);
-        //var sql = "select * from price_hour LIMIT 1";
 
          return db.queryAsync(sql).then(function(result) {
              console.log('1 record inserted');
              recordsSaved++;
          })
-
-
      }).then(function(result) {
         callback(null, recordsSaved);
         connection.end();
     });
+}
 
-
-
-/*    .then(function(result) {
-        callback(null, recordsSaved);
-    });*/
-
-
-};
-
+/**
+ * Returns the most recent timestamp for an instrument price entry.
+ * If the instrument does not exist, then 0 is returned.
+ *
+ * @param exchange
+ * @param instrument
+ * @param callback
+ */
 function getLastTimestampForInstrument(exchange, instrument, callback) {
-    var sql = "SELECT timestamp FROM price_hour where type='BC' ORDER BY timestamp DESC LIMIT 1"
+    var sql = "SELECT timestamp FROM price_hour where exchange='" + exchange + "' and type = '" + instrument + "'ORDER BY timestamp DESC LIMIT 1";
+
     connection.query(sql, function (error, results, fields) {
         if (error) {
             callback(new Error('error retrieving last timestamp: ' + error.message));
+            return;
+        }
+        else if (results.length == 0) {
+            callback(null, 0);
             return;
         }
         else {
@@ -86,9 +88,9 @@ function getLastTimestampForInstrument(exchange, instrument, callback) {
             return;
         }
     });
-};
+}
 
-//connection.end();
+
 
 module.exports = {
     getLastTimestampForInstrument: getLastTimestampForInstrument,
