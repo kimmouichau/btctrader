@@ -23,20 +23,28 @@ var request = require('request');
 
 
 
-function getPricesViaRest(test, callback) {
+/*function getPricesViaRest(test, callback) {
     request(BtcMarketsConfig.url + BtcMarketsConfig.uri.priceByTick, function (error, response, body) {
         console.log('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
         console.log('body:', body); // Print the HTML for the Google homepage.
     });
-}
+}*/
 
 function getHourlyPricesViaREST(sinceTime, callback) {
-    body = request(BtcMarketsConfig.url + BtcMarketsConfig.uri.priceByTick + sinceTime, function (error, response, body) {
+    var agent = new https.Agent();
+
+    var options = {
+        url: BtcMarketsConfig.url + BtcMarketsConfig.uri.priceByTick + sinceTime,
+        agent: agent
+    }
+
+    request(options, function (error, response, body) {
         console.log('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
         //console.log('body:', body); // Print the HTML for the Google homepage.
         callback(null, JSON.parse(body).ticks);
+        agent.destroy();
     });
 }
 
@@ -72,8 +80,9 @@ exports.myhandler = function(event, context, callback) {
         console.log(newPrices);
         return rds.savePricesAsync('BTCMARKETS', 'BTC', newPrices);
     }).then(function (result) {
-        console.log(result + "new prices saved successfully");
-        process.exit();
+        console.log(result + " new entries saved successfully");
+        callback(result + " new entries saved successfully");
+        //process.exit();
     }).catch(function(e) {
         console.log("error loading prices: " + e.message);
         console.log("stack: " + e.stack);
@@ -95,7 +104,9 @@ rds.startConnectionAsync().then(function(result) {
     return rds.savePricesAsync('BTCMARKETS', 'BTC', newPrices);
 }).then(function (result) {
     console.log(result + "new prices saved successfully");
-    process.exit();
+    //process.getActiveRequests();
+    //console.log(process._getActiveHandles());
+    //console.log(process._getActiveRequests());
 }).catch(function(e) {
     console.log("error loading prices: " + e.message);
     console.log("stack: " + e.stack);

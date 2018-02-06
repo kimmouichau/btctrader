@@ -62,6 +62,7 @@ function savePrices(exchange, instrument, prices, callback) {
 
      }).then(function(result) {
         callback(null, recordsSaved);
+        connection.end();
     });
 
 
