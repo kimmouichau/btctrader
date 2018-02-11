@@ -35,6 +35,20 @@ var endpoints = {
 var request = require('request');
 
 
+/**
+ * Retrieve a list of prices for the given exchange/instrument/timeframe from REST API
+ *
+ * @param exchange
+ * @param instrument
+ * @param timeframe array of timeframes
+ * @param since
+ * @param callback
+ */
+function retrievePrices(exchange, instrument, timeframe, since, callback) {
+
+};
+
+
 function getHourlyPricesViaREST(exchange, instrument, sinceTime, callback) {
     var agent = new https.Agent();
 
@@ -71,7 +85,7 @@ function parsePricesForExchange(exchange, body, callback) {
     }
     else if (exchange == 'bitfinex') {
         //callback(null, JSON.parse(body).ticks);
-        var parsedprices = JSON.parse(body).result["3600"];
+        var obj = JSON.parse(body).result["3600"];
 /*        var parsedprices = obj.map(function(value) {
             return [value[0], value[1], value[2], value[3], value[4], value[5]];
         });*/
